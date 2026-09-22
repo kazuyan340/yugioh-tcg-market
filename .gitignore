@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+data/yugioh_tcg.db
+# 各スクレイパーがsync_prices()実行中に書き出す中間データ。
+# build_unresolved_report.pyがこれをまとめてsite/data/unresolved-shop-items.json
+# (公開・コミット対象)を作るので、生データ自体はコミット不要。
+site/data/unresolved_raw/

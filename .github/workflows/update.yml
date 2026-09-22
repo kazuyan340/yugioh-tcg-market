@@ -1,0 +1,132 @@
+name: Daily price update
+
+# 遊戯王OCGカードDBは歴史的に13,000種類以上とタイトルの中でも突出して大きく、
+# 公式サイトもセッションCookie必須+礼儀正しいクロール間隔が要るため、カードマスタの
+# フルクロールを毎日回すのはコスト・時間の両面で非現実的。カードマスタ(新弾追加)は
+# update-cards.yml で週次、価格は本ワークフローで毎日、という2本立てにしている。
+on:
+  schedule:
+    # 毎日 UTC17:10 = JST2:10 (0分ちょうどはGitHub側の混雑で遅延しがちなため回避。
+    # update-cards.ymlの週次フルクロール(2:00開始)ともわずかにずらしてある)
+    - cron: "10 17 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  # 駿河屋はGitHub Actionsのクラウド(データセンター)IPを403でブロックすることが
+  # conan-tcg-market/onepiece-tcg-marketでの運用で判明しているため、このジョブだけ
+  # 通常回線を持つセルフホストランナー(自分のPC)で実行する。
+  fetch_surugaya:
+    runs-on: [self-hosted, self-hosted-yugioh]
+    timeout-minutes: 120
+    env:
+      # セルフホストランナーはNETWORK SERVICEアカウントで動作しており、個人用インストール
+      # (ユーザープロファイル配下)だとアクセスできずpip installが失敗するため、
+      # 全ユーザー向けインストールのフルパスを直接指定する(conan-tcg-market/
+      # onepiece-tcg-marketと同じ対処)。
+      PYTHON: C:\Program Files\Python312\python.exe
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: '& "${{ env.PYTHON }}" -m pip install -r requirements.txt'
+
+      - name: Restore price/card database
+        id: db_restore
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $gh = "C:\Program Files\GitHub CLI\gh.exe"
+          if (-not (Test-Path $gh)) { $gh = "gh" }
+          New-Item -ItemType Directory -Force -Path data | Out-Null
+          & $gh release download db-store --repo ${{ github.repository }} --pattern yugioh_tcg.db --dir data --clobber
+          if ($LASTEXITCODE -eq 0) {
+            echo "found=true" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "found=false" >> $env:GITHUB_OUTPUT
+            Write-Host "db-store release asset not found yet (expected on first run)."
+          }
+          exit 0
+        shell: powershell
+
+      - name: Fetch prices from Suruga-ya (respects Crawl-delay: 30)
+        run: '& "${{ env.PYTHON }}" scraper_prices_surugaya.py'
+
+      - name: Hand off database to the next job
+        uses: actions/upload-artifact@v4
+        with:
+          name: yugioh-tcg-db
+          path: |
+            data/yugioh_tcg.db
+            site/data/unresolved_raw/駿河屋.json
+          retention-days: 1
+
+  fetch_others_and_publish:
+    needs: fetch_surugaya
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Receive database from the Suruga-ya job
+        uses: actions/download-artifact@v4
+        with:
+          name: yugioh-tcg-db
+          path: .
+
+      - name: Fetch prices from Card Labo
+        run: python scraper_prices_cardlabo.py
+
+      - name: Fetch prices from Manzokuya
+        run: python scraper_prices_manzokuya.py
+
+      - name: Fetch prices from Card Shop WaiTV
+        run: python scraper_prices_waitv.py
+
+      - name: Fetch prices from Ryu no Shippo
+        run: python scraper_prices_ryuunoshippo.py
+
+      - name: Fetch prices from Cardrush
+        run: python scraper_prices_cardrush.py
+
+      - name: Build unresolved shop-listing report
+        run: python build_unresolved_report.py
+
+      - name: Download newly added card images
+        run: python images.py
+
+      - name: Export static JSON for the site
+        run: python export_static.py
+
+      - name: Generate per-card SEO pages
+        run: python generate_card_pages.py
+
+      - name: Save price/card database for the next run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload db-store data/yugioh_tcg.db --repo ${{ github.repository }} --clobber
+
+      - name: Commit updated site data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add site/data/ site/images/ site/card/ site/sitemap.xml
+          git diff --cached --quiet || git commit -m "chore: daily price update"
+          # このジョブが更新するのはサイトデータ・画像だけなので、手動でのコード修正等の
+          # pushとコンフリクトした場合はこのジョブが今生成した内容を優先してよい
+          # (conan-tcg-market/onepiece-tcg-marketでの運用実績に倣った対処)。
+          git fetch origin main
+          git merge -X ours origin/main --no-edit
+          git push

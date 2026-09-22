@@ -1,0 +1,74 @@
+name: Weekly card master sync
+
+# カードマスタ(公式DB db.yugioh-card.com)は歴史的に13,000種類以上あり、
+# セッションCookie確立+礼儀正しい間隔でのクロールが必須なため、フルクロールは
+# 毎日ではなく週次で十分(新弾は月に数回程度の頻度でしか追加されない)。
+# 価格は update.yml 側で毎日更新する。
+on:
+  schedule:
+    # 毎週日曜 UTC17:00 = JST 月曜2:00
+    - cron: "0 17 * * 0"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync_cards:
+    runs-on: [self-hosted, self-hosted-yugioh]
+    timeout-minutes: 360
+    env:
+      PYTHON: C:\Program Files\Python312\python.exe
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: '& "${{ env.PYTHON }}" -m pip install -r requirements.txt'
+
+      - name: Restore card/price database
+        id: db_restore
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $gh = "C:\Program Files\GitHub CLI\gh.exe"
+          if (-not (Test-Path $gh)) { $gh = "gh" }
+          New-Item -ItemType Directory -Force -Path data | Out-Null
+          & $gh release download db-store --repo ${{ github.repository }} --pattern yugioh_tcg.db --dir data --clobber
+          exit 0
+        shell: powershell
+
+      - name: Sync card master (session-cookie crawl, diff update)
+        run: '& "${{ env.PYTHON }}" scraper_cards.py'
+
+      - name: Sync forbidden/limited list
+        run: '& "${{ env.PYTHON }}" scraper_banlist.py'
+
+      - name: Download new card images
+        run: '& "${{ env.PYTHON }}" images.py'
+
+      - name: Export static JSON for the site
+        run: '& "${{ env.PYTHON }}" export_static.py'
+
+      - name: Generate per-card SEO pages
+        run: '& "${{ env.PYTHON }}" generate_card_pages.py'
+
+      - name: Save card/price database for the next run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $gh = "C:\Program Files\GitHub CLI\gh.exe"
+          if (-not (Test-Path $gh)) { $gh = "gh" }
+          & $gh release upload db-store data/yugioh_tcg.db --repo ${{ github.repository }} --clobber
+        shell: powershell
+
+      - name: Commit updated site data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add site/data/ site/images/ site/card/ site/sitemap.xml
+          git diff --cached --quiet || git commit -m "chore: weekly card master sync"
+          git fetch origin main
+          git merge -X ours origin/main --no-edit
+          git push
+        shell: powershell
