@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin-unofficial-cards.html
+Disallow: /data/unresolved-shop-items.json
+Disallow: /data/unresolved_raw/
+
+Sitemap: https://kazuyan340.github.io/yugioh-tcg-market/sitemap.xml

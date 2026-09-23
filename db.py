@@ -76,9 +76,13 @@ CARD_COLUMNS = [
 
 def get_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
     db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(db_path)
+    # busy_timeout: 複数プロセス/スクリプトから同じDBファイルに同時アクセスした際、
+    # 即座に "database is locked" で失敗せず、指定ミリ秒まで待ってリトライする
+    # (長時間のクロール中にimages.py等を並行実行しても落ちないようにするため)。
+    conn = sqlite3.connect(db_path, timeout=30)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA busy_timeout = 30000")
     return conn
 
 

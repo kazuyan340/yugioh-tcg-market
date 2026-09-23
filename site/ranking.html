@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="遊戯王OCGの相場ランキング(高額カード順)。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="遊戯王OCG カード図鑑">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:url" content="https://kazuyan340.github.io/yugioh-tcg-market/ranking.html">
+<meta property="og:title" content="相場ランキング | 遊戯王OCG カード図鑑">
+<meta property="og:description" content="遊戯王OCGの相場ランキング(高額カード順)。">
+<meta property="og:image" content="https://kazuyan340.github.io/yugioh-tcg-market/ogp.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="相場ランキング | 遊戯王OCG カード図鑑">
+<meta name="twitter:description" content="遊戯王OCGの相場ランキング(高額カード順)。">
+<meta name="twitter:image" content="https://kazuyan340.github.io/yugioh-tcg-market/ogp.png?v=1">
+<title>相場ランキング | 遊戯王OCG カード図鑑</title>
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<header class="toolbar">
+  <div class="title-row">
+    <div class="title-block">
+      <h1>💰 相場ランキング</h1>
+      <p id="last-updated" class="last-updated"></p>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-btn">📋 カード図鑑</a>
+      <a href="trends.html" class="nav-btn">📊 価格の動きを見る</a>
+      <a href="movers-up.html" class="nav-btn">🔺 値上がりを見る</a>
+      <a href="movers-down.html" class="nav-btn">🔻 値下がりを見る</a>
+      <a href="ranking.html" class="nav-btn current-page">💰 相場ランキング</a>
+      <a href="compare.html" class="nav-btn">★ お気に入り</a>
+      <a href="deck.html" class="nav-btn">🃏 デッキ作成</a>
+    </div>
+    <button type="button" class="nav-menu-toggle" aria-label="メニュー" aria-expanded="false">☰</button>
+  </div>
+  <div class="filters">
+    <div class="filter-item">
+      <label for="keyword">キーワード</label>
+      <input type="text" id="keyword" placeholder="カード名・種族・効果テキストで検索">
+    </div>
+    <button type="button" id="toggle-filters" class="filters-chevron-btn" title="絞り込み条件を開閉">▾</button>
+  </div>
+  <div class="filters filters-extra" id="filters-panel">
+    <details class="filter-group" id="filter-cardtype-group" open>
+      <summary>種類<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-cardtype-list"></div>
+    </details>
+    <details class="filter-group" id="filter-species-group">
+      <summary>種族<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-species-list"></div>
+    </details>
+    <details class="filter-group" id="filter-attribute-group">
+      <summary>属性<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-attribute-list"></div>
+    </details>
+    <details class="filter-group" id="filter-rarity-group">
+      <summary>レアリティ<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-rarity-list"></div>
+    </details>
+    <details class="filter-group" id="filter-pack-group">
+      <summary>収録パック<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-pack-list"></div>
+    </details>
+    <button type="button" id="reset-filters" class="filter-reset-btn">↺ 条件をリセット</button>
+  </div>
+  <div class="sort-row">
+    <label for="sort-select">並び替え</label>
+    <select id="sort-select">
+      <option value="price_desc">価格順(高い順)</option>
+      <option value="price_asc">価格順(安い順)</option>
+      <option value="id_asc">ID順</option>
+      <option value="id_desc">ID順(降順)</option>
+      <option value="level_desc">レベル順(高い順)</option>
+      <option value="level_asc">レベル順(低い順)</option>
+      <option value="atk_desc">ATK順(高い順)</option>
+      <option value="atk_asc">ATK順(低い順)</option>
+      <option value="def_desc">DEF順(高い順)</option>
+      <option value="def_asc">DEF順(低い順)</option>
+    </select>
+  </div>
+  <p id="result-count" class="result-count"></p>
+</header>
+
+<main id="card-grid" class="card-grid"></main>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button id="modal-favorite" class="favorite-star modal-favorite-star" title="お気に入りに登録/解除">☆</button>
+    <button id="modal-close" class="modal-close">&times;</button>
+    <div class="modal-body">
+      <div class="modal-image">
+        <img id="modal-image" alt="">
+      </div>
+      <div class="modal-info" id="modal-info"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-disclaimer">
+  <p>価格情報は当サイト調べです。実際の価格・在庫状況と差異が生じる場合があります。</p>
+  <p><a href="about.html">運営者情報</a>　<a href="privacy.html">プライバシーポリシー・お問い合わせ</a></p>
+</footer>
+
+<script src="common.js?v=1"></script>
+<script src="ranking.js?v=1"></script>
+</body>
+</html>

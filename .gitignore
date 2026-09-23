@@ -1,6 +1,8 @@
 __pycache__/
 *.pyc
-data/yugioh_tcg.db
+# DB本体やクロール作業時のログ・デバッグ用スクラッチファイルはコミット対象外
+# (onepiece-card-game/conanと同じ運用: data/には何もコミットしない)。
+data/
 # 各スクレイパーがsync_prices()実行中に書き出す中間データ。
 # build_unresolved_report.pyがこれをまとめてsite/data/unresolved-shop-items.json
 # (公開・コミット対象)を作るので、生データ自体はコミット不要。

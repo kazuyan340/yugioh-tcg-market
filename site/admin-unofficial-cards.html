@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>特定できなかったカード(管理用)</title>
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<header class="toolbar">
+  <div class="title-row">
+    <div class="title-block">
+      <h1>🕵️ 特定できなかったカード(管理用)</h1>
+      <p id="last-updated" class="last-updated"></p>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="reset-btn nav-btn">📋 一覧に戻る</a>
+    </div>
+  </div>
+</header>
+
+<section class="unresolved-section">
+  <p class="unresolved-lead">
+    各ショップの出品から自動でカード1枚に特定できなかったものを表示します。
+    候補があるものは画像をクリックして選んでください(選択はこの端末のブラウザにのみ保存されます)。
+    選び終わったら「選択をエクスポート」でJSONを保存し、それをそのままClaudeに渡してください。
+  </p>
+
+  <div class="unresolved-export-bar">
+    <span id="manual-resolution-count" class="result-count">0件選択済み</span>
+    <button type="button" id="export-manual-resolutions" class="reset-btn">💾 選択をエクスポート</button>
+    <button type="button" id="clear-manual-resolutions" class="reset-btn">🗑️ 選択をクリア</button>
+  </div>
+
+  <h3>① 候補は絞れたが1枚に特定できないカード<span id="ambiguous-count" class="result-count"></span></h3>
+  <div id="ambiguous-list"></div>
+
+  <h3>② 自分のカードDBに見当たらないカード<span id="missing-count" class="result-count"></span></h3>
+  <div id="missing-list"></div>
+</section>
+
+<script src="admin-unofficial-cards.js?v=1"></script>
+</body>
+</html>

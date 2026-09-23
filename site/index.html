@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="遊戯王OCGの全カード情報と、複数ショップの価格相場をまとめて検索・閲覧できるカード図鑑サイト。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="遊戯王OCG カード図鑑">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:url" content="https://kazuyan340.github.io/yugioh-tcg-market/">
+<meta property="og:title" content="遊戯王OCG カード図鑑">
+<meta property="og:description" content="遊戯王OCGの全カード情報と、複数ショップの価格相場をまとめて検索・閲覧できるカード図鑑サイト。">
+<meta property="og:image" content="https://kazuyan340.github.io/yugioh-tcg-market/ogp.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="遊戯王OCG カード図鑑">
+<meta name="twitter:description" content="遊戯王OCGの全カード情報と、複数ショップの価格相場をまとめて検索・閲覧できるカード図鑑サイト。">
+<meta name="twitter:image" content="https://kazuyan340.github.io/yugioh-tcg-market/ogp.png?v=1">
+<title>遊戯王OCG カード図鑑</title>
+<link rel="stylesheet" href="style.css?v=1">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "遊戯王OCG カード図鑑",
+  "url": "https://kazuyan340.github.io/yugioh-tcg-market/",
+  "description": "遊戯王OCGの全カード情報と、複数の販売サイトの価格相場をまとめて検索・閲覧できるカード図鑑サイト。"
+}
+</script>
+</head>
+<body>
+<header class="toolbar">
+  <div class="title-row">
+    <div class="title-block">
+      <h1>遊戯王OCG カード図鑑</h1>
+      <p id="last-updated" class="last-updated"></p>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-btn current-page">📋 カード図鑑</a>
+      <a href="trends.html" class="nav-btn">📊 価格の動きを見る</a>
+      <a href="movers-up.html" class="nav-btn">🔺 値上がりを見る</a>
+      <a href="movers-down.html" class="nav-btn">🔻 値下がりを見る</a>
+      <a href="ranking.html" class="nav-btn">💰 相場ランキング</a>
+      <a href="compare.html" class="nav-btn">★ お気に入り</a>
+      <a href="deck.html" class="nav-btn">🃏 デッキ作成</a>
+    </div>
+    <button type="button" class="nav-menu-toggle" aria-label="メニュー" aria-expanded="false">☰</button>
+  </div>
+  <div class="filters">
+    <div class="filter-item">
+      <label for="keyword">キーワード</label>
+      <input type="text" id="keyword" placeholder="カード名・種族・効果テキストで検索">
+    </div>
+    <button type="button" id="toggle-filters" class="filters-chevron-btn" title="絞り込み条件を開閉">▾</button>
+  </div>
+  <div class="filters filters-extra" id="filters-panel">
+    <details class="filter-group" id="filter-cardtype-group" open>
+      <summary>種類<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-cardtype-list"></div>
+    </details>
+    <details class="filter-group" id="filter-species-group">
+      <summary>種族<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-species-list"></div>
+    </details>
+    <details class="filter-group" id="filter-attribute-group">
+      <summary>属性<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-attribute-list"></div>
+    </details>
+    <details class="filter-group" id="filter-rarity-group">
+      <summary>レアリティ<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-rarity-list"></div>
+    </details>
+    <details class="filter-group" id="filter-pack-group">
+      <summary>収録パック<span class="count-badge hidden"></span></summary>
+      <div class="checkbox-list" id="filter-pack-list"></div>
+    </details>
+    <details class="filter-group" id="filter-atk-group">
+      <summary>ATK</summary>
+      <div class="range-filter">
+        <input type="number" id="atk-min" placeholder="最小" min="0" step="100">
+        〜
+        <input type="number" id="atk-max" placeholder="最大" min="0" step="100">
+      </div>
+    </details>
+    <details class="filter-group" id="filter-def-group">
+      <summary>DEF</summary>
+      <div class="range-filter">
+        <input type="number" id="def-min" placeholder="最小" min="0" step="100">
+        〜
+        <input type="number" id="def-max" placeholder="最大" min="0" step="100">
+      </div>
+    </details>
+    <button type="button" id="reset-filters" class="filter-reset-btn">↺ 条件をリセット</button>
+  </div>
+  <p id="result-count" class="result-count"></p>
+</header>
+
+<main id="card-grid" class="card-grid"></main>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button id="modal-favorite" class="favorite-star modal-favorite-star" title="お気に入りに登録/解除">☆</button>
+    <button id="modal-close" class="modal-close">&times;</button>
+    <div class="modal-body">
+      <div class="modal-image">
+        <img id="modal-image" alt="">
+      </div>
+      <div class="modal-info" id="modal-info"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-disclaimer">
+  <p>掲載しているカード画像・カード情報は遊戯王OCG公式サイトの情報を参照しています。</p>
+  <p><a href="about.html">運営者情報</a>　<a href="privacy.html">プライバシーポリシー・お問い合わせ</a></p>
+  <p><a href="admin-unofficial-cards.html">🔒 管理用: 特定できなかったカード</a></p>
+</footer>
+
+<script src="common.js?v=1"></script>
+<script src="app.js?v=1"></script>
+</body>
+</html>

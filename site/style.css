@@ -1,0 +1,2009 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f4f4f6;
+  --card-bg: #ffffff;
+  --text: #222;
+  --muted: #777;
+  --border: #ddd;
+  --accent: #2f6fed;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Yu Gothic", "Meiryo", -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.toolbar {
+  padding: 12px 20px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.toolbar h1 {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+/* タイトルと最終更新表示を縦に並べる(スマホは横に長くなりすぎるため)。 */
+.title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* PCは横幅に余裕があるので、最終更新をタイトルの右側に並べる。 */
+@media (min-width: 481px) {
+  .title-block {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 12px;
+  }
+}
+
+/* ナビ本体は右から重なるドロワーにする(PC・スマホとも共通)。display:noneでは
+   transformのアニメーションが効かないため、画面外に追い出す形(translateX)で
+   隠す。開閉は三本線ボタン(.nav-menu-toggle)のクリックでnav-linksに.openを
+   付け外しするcommon.jsのbindNavMenuToggleが担当。 */
+.nav-links {
+  display: flex;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 78vw;
+  max-width: 300px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin: 0;
+  padding: 56px 16px 20px;
+  background: var(--card-bg);
+  box-shadow: -6px 0 24px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+}
+
+.nav-links.open {
+  transform: translateX(0);
+}
+
+/* ドロワー内は左寄せのフラットなリスト項目にする(横並びピルのままだと
+   縦積みしたときに不格好なため)。 */
+.nav-links .nav-btn {
+  text-align: left;
+  padding: 13px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.nav-links .nav-btn:active {
+  background: var(--bg);
+}
+
+.nav-links .nav-btn.current-page {
+  background: rgba(47, 111, 237, 0.1);
+  border: none;
+}
+
+.nav-menu-toggle {
+  margin-left: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+/* 暗幕。メニューが開いている間、他の部分を少し暗くして「今メニュー操作中」を
+   視覚的にはっきりさせる。要素自体はJS側(bindNavMenuToggle)で生成する。 */
+.nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 20, 0.45);
+  z-index: 90;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.nav-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ドロワー右上の閉じるボタン。要素自体はJS側で生成する。 */
+.nav-drawer-close {
+  display: block;
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* [PREVIEW] タイトル行を画面幅いっぱいのアクセントカラーの帯にする(.toolbarの
+   paddingを打ち消す負マージンで両端までbleedさせる)。三本線ボタンはこの帯の
+   右端に置く。 */
+.title-row {
+  position: relative;
+  background: var(--accent);
+  color: #fff;
+  margin: -12px -20px 10px;
+  padding: 12px 16px;
+  gap: 2px;
+}
+
+.title-row .last-updated {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* タイトル帯がアクセントカラーになるため、三本線ボタンもそれに合わせて
+   白基調に切り替える。 */
+.nav-menu-toggle {
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.25rem;
+  padding: 4px 12px;
+  border-radius: 6px;
+}
+
+.nav-menu-toggle:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.last-updated {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.nav-link {
+  font-size: 0.85rem;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  text-decoration: underline;
+}
+
+.empty-message {
+  color: var(--muted);
+  font-size: 0.9rem;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filter-item label {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.filters input[type="text"] {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  min-width: 220px;
+}
+
+.filter-group {
+  position: relative;
+}
+
+.filter-group summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: var(--card-bg);
+  user-select: none;
+}
+
+.filter-group summary::-webkit-details-marker {
+  display: none;
+}
+
+.filter-group summary::after {
+  content: " ▾";
+  color: var(--muted);
+}
+
+.filter-group[open] summary {
+  border-color: var(--accent);
+}
+
+/* 絶対配置のバッジにして、件数の桁が変わってもボタン自体の幅を変えないようにする
+   (以前はsummaryのテキストの一部として流れ込み、幅が変わって.filtersの折り返し位置が
+   ずれてしまっていた)。 */
+.count-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 16px;
+  padding: 1px 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: bold;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* ATK/DEFの数値範囲フィルタ(最小/最大の2つの入力欄)。他のフィルタと同じ
+   position:absoluteのドロップダウンにする(.checkbox-listと同じ見た目・挙動)。 */
+.range-filter {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.range-filter input {
+  width: 80px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.checkbox-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 10;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  min-width: 140px;
+  max-width: 520px;
+  max-height: 260px;
+  overflow-y: auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#filter-pack-list {
+  width: 480px;
+  max-width: 90vw;
+}
+
+/* 効果キーワードのラベルはパック名と違って短いので、折り返さず1行で表示する。 */
+#filter-keyword-list label {
+  white-space: nowrap;
+}
+
+.checkbox-list label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  white-space: normal;
+  word-break: break-word;
+  cursor: pointer;
+}
+
+/* 収録パックフィルタ内の「パック/デッキ/プロモーション」グループ見出し。 */
+.checkbox-list-heading {
+  font-size: 0.72rem;
+  font-weight: bold;
+  color: var(--muted);
+  margin: 6px 0 2px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.checkbox-list-heading:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+/* フィルタのチェックボックスは 未選択→含める→除外→未選択 の3状態をクリックで
+   循環する。除外中はチェックボックス自体を赤く塗り、ラベルも赤字+取り消し線にして
+   「含める」との違いを一目で分かるようにする。 */
+.checkbox-list input[type="checkbox"][data-exclude="1"] {
+  accent-color: #d33;
+}
+
+.checkbox-list label.filter-exclude {
+  color: #d33;
+  text-decoration: line-through;
+}
+
+.reset-btn {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--muted);
+}
+
+.reset-btn:hover {
+  color: var(--text);
+}
+
+/* キーワード欄はチェックボックス側(色/レアリティ等)と違って常に見えたままに
+   し、開閉トグルもキーワード欄のすぐ隣に置く(margin-leftで画面右端に離さない)。
+   開閉対象は別行の.filters-extraだけなので、閉じたときにキーワード行の高さには
+   一切影響せず、位置がズレる心配が無い。 */
+.filters-chevron-btn {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 4px 6px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* 開閉対象。閉じるとdisplay:noneで実際に高さが無くなる(キーワード行とは
+   別行なので、閉じてもキーワード行やチェブロンの位置には影響しない)。 */
+.filters-extra {
+  margin-top: 8px;
+}
+
+.filters-chevron-btn:hover {
+  color: var(--text);
+}
+
+/* 隣に並ぶ.filter-group summary(色/レアリティ等のプルダウン)と枠線・背景が
+   同じだと、プルダウンだと思ってクリックされてしまう(展開されず即リセットされて
+   戸惑う)ため、あえて枠なしのテキストリンク調にして動きの違いを見た目でも示す。 */
+.filter-reset-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.filter-reset-btn:hover {
+  background: rgba(47, 111, 237, 0.12);
+}
+
+.nav-btn {
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* ナビ内の「今開いているページ」自身へのリンクを、アクセントカラーで強調する
+   (全ページとも同じ項目一式を出した上で、今どこにいるかを色で分かるようにする)。 */
+.nav-btn.current-page {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.result-count {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.admin-source-badge {
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #d9364f;
+  color: #fff;
+  font-size: 0.62rem;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unresolved-section {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 2px solid var(--border);
+}
+
+.unresolved-section h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.section-heading {
+  margin: 16px 20px 0;
+  font-size: 1.1rem;
+}
+
+.affiliate-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 20px 0;
+}
+
+.affiliate-links a {
+  text-decoration: none;
+}
+
+.unresolved-section h3 {
+  margin: 24px 0 8px;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.unresolved-site-heading {
+  margin: 20px 0 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+
+.unresolved-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.unresolved-group {
+  margin: 10px 0;
+  padding: 6px 0 4px 8px;
+  border-left: 3px solid var(--border);
+}
+
+.unresolved-group > .unresolved-candidates {
+  margin-bottom: 2px;
+}
+
+.unresolved-listing-row {
+  padding-left: 6px;
+  border-bottom: 1px dashed var(--border);
+}
+
+.unresolved-listing-row:last-child {
+  border-bottom: none;
+}
+
+.unresolved-thumb {
+  flex: none;
+  width: 40px;
+  height: 56px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unresolved-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.unresolved-thumb-empty {
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.unresolved-row-info {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.5;
+}
+
+.unresolved-row-title {
+  color: var(--text);
+}
+
+.unresolved-row-title code {
+  margin-left: 4px;
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: 0.75rem;
+}
+
+.unresolved-rarity {
+  margin-left: 4px;
+  color: var(--muted);
+}
+
+.unresolved-price {
+  margin-left: 8px;
+  font-weight: bold;
+}
+
+.unresolved-candidates {
+  margin-top: 2px;
+  color: var(--text);
+  font-size: 0.75rem;
+}
+
+.unresolved-hint {
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.unresolved-export-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+
+.unresolved-picker {
+  margin-top: 6px;
+}
+
+.unresolved-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.unresolved-picker-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 84px;
+  padding: 3px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  cursor: pointer;
+}
+
+.unresolved-picker-item img {
+  width: 40px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 3px;
+}
+
+.unresolved-picker-item span {
+  font-size: 0.62rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 78px;
+}
+
+.unresolved-picker-item .unresolved-picker-pack {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.unresolved-picker-item.selected {
+  border-color: var(--accent);
+  background: rgba(47, 111, 237, 0.12);
+}
+
+.unresolved-picker-item.selected span {
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.sort-row label {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.sort-row select {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px;
+  padding: 20px;
+}
+
+.trend-section {
+  padding: 4px 20px 24px;
+}
+
+.trend-section h2 {
+  font-size: 1.05rem;
+  margin: 12px 0 2px;
+}
+
+.trend-desc {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.trend-section .card-grid {
+  padding: 0;
+}
+
+.trend-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: bold;
+  padding: 3px 6px;
+  border-radius: 6px;
+  text-align: center;
+  margin-bottom: 4px;
+  line-height: 1.3;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.trend-badge.up {
+  background: #d9364f;
+}
+
+.trend-badge.down {
+  background: #2f6fed;
+}
+
+.card-tile {
+  display: block;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  position: relative;
+  /* グリッドアイテムは既定でmin-width:autoのため、.name(white-space:nowrap)の
+     文字幅がそのまま最小幅として効いてしまい、1frの列が縮みきれず横にはみ出す
+     (特にスマホの4列表示で顕著)。0にしてoverflow/ellipsis側に任せる。 */
+  min-width: 0;
+}
+
+.favorite-star {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  color: #bbb;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.favorite-star.active {
+  color: #f0a500;
+}
+
+/* 相場ランキングのカードタイルは左上に順位・価格バッジ(.trend-badge)が乗るため、
+   既定位置(top:4px)だと星と重なってバッジの文字が隠れてしまう。星をバッジの下に
+   ずらす。 */
+.card-tile.has-badge .favorite-star {
+  top: 34px;
+}
+
+.favorite-star:hover {
+  color: #f0a500;
+}
+
+/* --- 価格チェックページ(複数カードの価格グラフを一望する) --- */
+/* 表とグラフを横並びにするため、1行あたりのカード数を2枚に固定して十分な幅を確保する
+   (auto-fitだと画面幅によっては1枚あたりが狭くなり、表+グラフが縦積みになってしまっていた)。 */
+.price-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+@media (max-width: 700px) {
+  .price-check-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* スマホ幅ではカード一覧を横4枚並びの小さいサムネイルにして、1画面あたりの
+   表示件数を増やす(.card-tileはindex/ranking/compare/trends/deckの検索結果で
+   共有しているクラスなので、ここを直せば全ページに効く)。 */
+@media (max-width: 480px) {
+  .card-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .card-tile {
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  .card-tile img {
+    border-radius: 4px;
+  }
+
+  .card-tile .name {
+    font-size: 0.68rem;
+    margin: 4px 0 1px;
+  }
+
+  .card-tile .sub {
+    font-size: 0.6rem;
+  }
+
+  /* 価格を常に別行にして、数字と「円」が離れて改行されるのを防ぐ。
+     font-sizeは.card-tile .subに書いても後方の(非スマホ用)同名セレクタに
+     詳細度同点で打ち消されてしまうため、ここで直接指定する。 */
+  .sub-meta,
+  .sub-price {
+    display: block;
+    font-size: 0.6rem;
+  }
+
+  /* .favorite-starはカード一覧タイルとモーダルの★ボタンで共有しているクラスの
+     ため、ここを無条件に上書きするとモーダル側(.modal-favorite-star)の★まで
+     18pxに縮んでしまう(実際に発生した不具合)。カードタイルのものだけに絞る。 */
+  .card-tile .favorite-star {
+    top: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+  }
+
+  .card-tile.has-badge .favorite-star {
+    top: 18px;
+  }
+
+  .trend-badge {
+    font-size: 0.58rem;
+    padding: 2px 4px;
+    margin-bottom: 2px;
+  }
+
+  /* キーワード入力欄を、隣の▾ボタンのところまで幅いっぱいに伸ばす
+     (min-width:220pxの固定幅だと画面幅によっては▾ボタンとの間に余白が空く)。 */
+  .filters .filter-item {
+    flex: 1;
+  }
+
+  .filters input[type="text"] {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.price-check-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.price-check-card.over-threshold {
+  border-color: #d9364f;
+  box-shadow: 0 0 0 1px #d9364f;
+}
+
+.price-check-card.under-threshold {
+  border-color: #2f6fed;
+  box-shadow: 0 0 0 1px #2f6fed;
+}
+
+.card-threshold-row {
+  display: block;
+  margin: 8px 0;
+  font-size: 0.78rem;
+  color: var(--muted);
+  cursor: default;
+}
+
+.card-threshold-row input {
+  width: 90px;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.price-check-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.price-check-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.price-check-header img {
+  width: 56px;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.price-check-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.price-check-info .name {
+  font-weight: bold;
+  font-size: 0.9rem;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.price-check-info .sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.price-check-canvas {
+  width: 100%;
+  height: 200px;
+  display: block;
+}
+
+.compare-remove {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.compare-remove:hover {
+  color: #d33;
+}
+
+.card-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.card-tile img {
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #eee;
+}
+
+.card-tile .name {
+  font-weight: bold;
+  font-size: 0.85rem;
+  margin: 6px 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-tile .sub {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+.pager button {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pager button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* モーダル: タイトルバーなしでカードが浮かぶような見た目。
+   内容が画面に収まらない場合は overlay 自体を縦スクロールさせる
+   (modal-card 側でスクロールさせると閉じるボタンの位置が扱いにくいため)。 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 100;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.modal-card {
+  background: var(--card-bg);
+  border-radius: 14px;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  padding: 16px 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  border: none;
+  background: none;
+  font-size: 1.6rem;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+/* .favorite-starの既定位置(top:4px/right:4px)はカードタイル用の小さい寄せなので、
+   モーダル内では閉じるボタンと重ならないよう左にずらす。 */
+.modal-favorite-star {
+  top: 10px;
+  right: 64px;
+}
+
+.modal-body {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.modal-image img {
+  width: 170px;
+  max-width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+.modal-info {
+  flex: 1;
+  min-width: 240px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-info .field {
+  display: flex;
+  gap: 8px;
+  margin: 2px 0;
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.modal-info .field .label {
+  font-weight: bold;
+  min-width: 6em;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.modal-info .ability {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: #f7f7f9;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  max-height: 108px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-price-section {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.modal-price-section h3 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.price-stats {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.price-avg-highlight {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.price-avg-value {
+  color: var(--accent);
+  margin: 0 4px;
+}
+
+.price-avg-range {
+  font-size: 0.85rem;
+  font-weight: normal;
+  color: var(--muted);
+}
+
+.price-avg-date {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.price-site-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin: 6px 0 8px;
+}
+
+.price-site-table th,
+.price-site-table td {
+  text-align: left;
+  padding: 3px 8px 3px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.price-site-table th {
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.site-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+}
+
+.pr-label {
+  display: inline-block;
+  font-size: 0.65rem;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 3px;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+/* サイト別最安値の表とは別枠であることが分かるように、表からは少し離し、
+   単独のボタンらしい見た目(角丸のピル+ブランドカラー)にする。 */
+.purchase-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.mercari-check-btn,
+.amazon-check-btn,
+.rakuten-check-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.mercari-check-btn {
+  background: #ff5b6d;
+}
+
+.mercari-check-btn:hover {
+  background: #e64d5e;
+}
+
+.amazon-check-btn {
+  background: #ff9900;
+}
+
+.amazon-check-btn:hover {
+  background: #e08600;
+}
+
+.rakuten-check-btn {
+  background: #bf0000;
+}
+
+.rakuten-check-btn:hover {
+  background: #990000;
+}
+
+.mercari-check-btn .pr-label,
+.amazon-check-btn .pr-label,
+.rakuten-check-btn .pr-label {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* --- グッズページ --- */
+.goods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  padding: 0;
+}
+
+.goods-tile {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+
+.goods-tile img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.goods-title {
+  font-weight: bold;
+  font-size: 0.85rem;
+  margin: 8px 0 2px;
+}
+
+.goods-meta {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.goods-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.goods-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: #fff;
+}
+
+.goods-link.ttmall {
+  background: #0a5eb3;
+}
+
+.goods-link.ttmall:hover {
+  background: #084a8c;
+}
+
+.goods-link.amazon {
+  background: #ff9900;
+}
+
+.goods-link.amazon:hover {
+  background: #e08600;
+}
+
+.goods-link.rakuten {
+  background: #bf0000;
+}
+
+.goods-link.rakuten:hover {
+  background: #990000;
+}
+
+.goods-link .pr-label {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* スマホ幅では自動折返し(auto-fill, minmax(180px,...))だと180pxを2列分
+   確保できず1列縦並びになってしまうため、2列固定にして余白も詰める。 */
+@media (max-width: 480px) {
+  .goods-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .goods-tile {
+    padding: 6px;
+  }
+
+  .goods-title {
+    font-size: 0.75rem;
+    margin: 6px 0 2px;
+  }
+
+  .goods-meta {
+    font-size: 0.68rem;
+    margin-bottom: 6px;
+  }
+
+  .goods-link {
+    padding: 5px 6px;
+    font-size: 0.7rem;
+  }
+}
+
+.chart-tooltip {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  background: rgba(30, 30, 30, 0.9);
+  color: #fff;
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  display: none;
+}
+
+.price-detail-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.price-table-col {
+  flex: 1 1 190px;
+  min-width: 170px;
+}
+
+.price-chart-col {
+  flex: 1 1 280px;
+  min-width: 250px;
+}
+
+.period-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.period-tab {
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.period-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.site-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.site-tab {
+  padding: 5px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.site-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+#price-chart {
+  width: 100%;
+  height: 260px;
+  display: block;
+}
+
+.price-empty {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.static-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+}
+
+/* カード個別ページ(card/{id}.html)。.modal-card/.modal-body/.modal-info等は
+   モーダル用のクラスをそのまま流用している(position:fixedに依存していないため
+   通常のページ本文としても問題なく使える)。 */
+.card-detail-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.card-detail-card {
+  max-width: none;
+  width: auto;
+}
+
+.card-detail-back {
+  margin: 16px 4px 0;
+  font-size: 0.85rem;
+}
+
+.static-section {
+  margin-bottom: 22px;
+}
+
+.static-section h2 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+
+.static-section p {
+  font-size: 0.88rem;
+  line-height: 1.7;
+  margin: 0 0 6px;
+  color: var(--text);
+}
+
+.static-updated {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 480px;
+}
+
+.contact-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.contact-form input,
+.contact-form textarea {
+  font: inherit;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text);
+  resize: vertical;
+}
+
+.contact-form button {
+  align-self: flex-start;
+}
+
+.history-item {
+  display: flex;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.history-date {
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.history-item a {
+  color: var(--text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.history-item a:hover {
+  text-decoration: underline;
+}
+
+.site-disclaimer {
+  padding: 16px 20px 24px;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--muted);
+  text-align: center;
+}
+
+.site-disclaimer p {
+  margin: 4px 0;
+}
+
+.site-disclaimer a {
+  color: var(--accent);
+}
+
+/* デッキ作成ページ */
+.deck-select-view {
+  padding: 10px 20px 24px;
+}
+
+.deck-select-view h2 {
+  font-size: 1.1rem;
+  margin: 0 0 12px;
+}
+
+.deck-edit-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px 0;
+}
+
+.deck-edit-title {
+  font-weight: bold;
+}
+
+.save-deck-btn {
+  background: #2e7d32;
+  border-color: #2e7d32;
+  color: #fff;
+  font-weight: bold;
+}
+
+.save-deck-btn:hover {
+  background: #256428;
+  color: #fff;
+}
+
+.unsaved-indicator {
+  font-size: 0.8rem;
+  color: #d33;
+}
+
+.unsaved-indicator.hidden {
+  display: none;
+}
+
+#view-deck-view {
+  padding: 0 20px 24px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.deck-list-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.deck-list-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: var(--card-bg);
+  position: relative;
+}
+
+.deck-list-tile.active {
+  border-color: var(--accent);
+}
+
+.deck-list-thumbs {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.deck-list-thumb {
+  width: 52px;
+  aspect-ratio: 5 / 7;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #eee;
+}
+
+.deck-list-thumb.empty {
+  border: 1px dashed var(--border);
+  background: transparent;
+}
+
+.deck-list-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 事件カードは横向きのものがあるため、パートナーと高さは揃えたまま
+   幅は画像の比率に合わせて伸ばし、トリミングせずそのまま表示する。 */
+.deck-list-thumb-case {
+  width: fit-content;
+  min-width: 52px;
+  height: 72.8px; /* パートナー枠(幅52px, aspect-ratio 5/7)と高さを揃える */
+  aspect-ratio: auto;
+}
+
+.deck-list-thumb-case img {
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.deck-list-name {
+  font-size: 0.95rem;
+  font-weight: bold;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deck-list-count {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.deck-list-price {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--accent);
+}
+
+.deck-list-delete {
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.deck-list-delete:hover {
+  color: #d33;
+}
+
+.deck-list-add {
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  background: none;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.deck-layout {
+  display: grid;
+  grid-template-columns: 500px 600px;
+  justify-content: center;
+  gap: 12px;
+  align-items: start;
+  padding: 10px 20px 24px;
+}
+
+.deck-main h3,
+#view-deck-view h3 {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 10px 0 4px;
+}
+
+.deck-hint {
+  font-size: 0.66rem;
+  font-weight: normal;
+  color: var(--muted);
+}
+
+.deck-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.deck-count {
+  font-size: 0.76rem;
+  color: var(--muted);
+}
+
+.deck-count-ok {
+  color: #2f9e44;
+  font-weight: bold;
+}
+
+.deck-count-warn {
+  color: #e8590c;
+  font-weight: bold;
+}
+
+.deck-zone-section {
+  margin-bottom: 14px;
+}
+
+.deck-zone-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.banlist-mode-note {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 4px 0 10px;
+}
+
+.deck-total {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: var(--accent);
+  margin-right: auto;
+}
+
+.deck-total-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.deck-summary .reset-btn {
+  padding: 3px 8px;
+  font-size: 0.72rem;
+}
+
+.deck-top-slots {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.deck-slot-section {
+  flex: 0 0 auto;
+}
+
+.deck-slot-section h3 {
+  margin: 0 0 4px;
+}
+
+.deck-top-slots .deck-slot-box {
+  width: 48px;
+}
+
+/* パートナー/事件の1枠、およびメインデッキの1枠(1枚)を表すカード形の箱。
+   非公式のファンメイドデッキメーカーのグリッド見た目を参考にしている。 */
+.deck-slot-box {
+  position: relative;
+  aspect-ratio: 5 / 7;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--card-bg);
+  cursor: pointer;
+}
+
+.deck-slot-box.empty {
+  border: 2px dashed var(--border);
+}
+
+.deck-slot-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 事件カードは縦向き/横向きが混在するため、高さはパートナー枠と揃えたまま、
+   横向きのカードは幅を切らずにそのまま横長で表示する。 */
+#deck-case,
+#deck-view-case {
+  width: fit-content;
+  min-width: 48px;
+  height: 67.2px; /* パートナー枠(幅48px, aspect-ratio 5/7)と同じ高さに揃える */
+  aspect-ratio: auto;
+}
+
+#deck-case img,
+#deck-view-case img {
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.deck-slot-clear {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  width: 15px;
+  height: 15px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.65rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.deck-main-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+  max-width: 460px;
+}
+
+.deck-search-panel {
+  position: sticky;
+  top: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  font-size: 0.85rem;
+}
+
+.deck-search-panel .filter-item {
+  margin-bottom: 6px;
+}
+
+.deck-search-panel input[type="text"] {
+  width: 100%;
+}
+
+.deck-type-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.type-toggle {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--muted);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.type-toggle.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.type-toggle:disabled {
+  cursor: not-allowed;
+}
+
+/* 選択中(青)のボタンが押せない状態でも、色まで薄くはしない
+   (例: 事件枠にフォーカス中は事件ボタンだけ青のまま・押せない)。 */
+.type-toggle:disabled:not(.active) {
+  opacity: 0.5;
+}
+
+.deck-search-grid {
+  padding: 0;
+  margin-top: 8px;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+/* 事件カードは横向きのものがあるため、枠は縦長のまま・画像はトリミングせず
+   (object-fit: contain)そのままの縦横比で収める。 */
+.deck-search-grid .deck-tile-img-wrap img {
+  object-fit: contain;
+}
+
+.deck-search-grid .card-tile {
+  padding: 3px;
+}
+
+.deck-tile-img-wrap {
+  position: relative;
+  line-height: 0;
+}
+
+.deck-info-btn {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.55rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1px 0 0;
+}
+
+@media (max-width: 900px) {
+  .deck-layout {
+    grid-template-columns: 1fr;
+  }
+  .deck-search-panel {
+    position: static;
+    max-height: none;
+  }
+  .deck-main-grid {
+    grid-template-columns: repeat(8, 1fr);
+  }
+  .deck-search-grid {
+    grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1b1c1f;
+    --card-bg: #26272b;
+    --text: #eee;
+    --muted: #999;
+    --border: #3a3b3f;
+  }
+  .modal-info .ability {
+    background: #1f2023;
+  }
+}

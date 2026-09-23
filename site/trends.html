@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="遊戯王OCGの価格が直近上昇・上昇傾向・直近下降・下降傾向にあるカードをチェックできるページ。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="遊戯王OCG カード図鑑">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:url" content="https://kazuyan340.github.io/yugioh-tcg-market/trends.html">
+<meta property="og:title" content="価格の動き | 遊戯王OCG カード図鑑">
+<meta property="og:description" content="遊戯王OCGの価格が直近上昇・上昇傾向・直近下降・下降傾向にあるカードをチェックできるページ。">
+<meta property="og:image" content="https://kazuyan340.github.io/yugioh-tcg-market/ogp.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="価格の動き | 遊戯王OCG カード図鑑">
+<meta name="twitter:description" content="遊戯王OCGの価格が直近上昇・上昇傾向・直近下降・下降傾向にあるカードをチェックできるページ。">
+<meta name="twitter:image" content="https://kazuyan340.github.io/yugioh-tcg-market/ogp.png?v=1">
+<title>価格の動き | 遊戯王OCG カード図鑑</title>
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<header class="toolbar">
+  <div class="title-row">
+    <div class="title-block">
+      <h1>📊 価格の動き</h1>
+      <p id="last-updated" class="last-updated"></p>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-btn">📋 カード図鑑</a>
+      <a href="trends.html" class="nav-btn current-page">📊 価格の動きを見る</a>
+      <a href="movers-up.html" class="nav-btn">🔺 値上がりを見る</a>
+      <a href="movers-down.html" class="nav-btn">🔻 値下がりを見る</a>
+      <a href="ranking.html" class="nav-btn">💰 相場ランキング</a>
+      <a href="compare.html" class="nav-btn">★ お気に入り</a>
+      <a href="deck.html" class="nav-btn">🃏 デッキ作成</a>
+    </div>
+    <button type="button" class="nav-menu-toggle" aria-label="メニュー" aria-expanded="false">☰</button>
+  </div>
+  <div class="site-tabs" id="site-tabs"></div>
+</header>
+
+<section class="trend-section">
+  <h2>🔺 直近上昇したカード</h2>
+  <p class="trend-desc">前回の取得より、価格が値上がりしたカードです。</p>
+  <div id="recent-up-grid" class="card-grid"></div>
+  <p id="recent-up-empty" class="empty-message hidden">まだ比較できるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+</section>
+
+<section class="trend-section">
+  <h2>📈 上昇傾向のカード</h2>
+  <p class="trend-desc">2回連続で値上がりしているカードです。</p>
+  <div id="trend-up-grid" class="card-grid"></div>
+  <p id="trend-up-empty" class="empty-message hidden">まだ上昇傾向と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+</section>
+
+<section class="trend-section">
+  <h2>🔻 直近下降したカード</h2>
+  <p class="trend-desc">前回の取得より、価格が値下がりしたカードです。</p>
+  <div id="recent-down-grid" class="card-grid"></div>
+  <p id="recent-down-empty" class="empty-message hidden">まだ比較できるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+</section>
+
+<section class="trend-section">
+  <h2>📉 下降傾向のカード</h2>
+  <p class="trend-desc">2回連続で値下がりしているカードです。</p>
+  <div id="trend-down-grid" class="card-grid"></div>
+  <p id="trend-down-empty" class="empty-message hidden">まだ下降傾向と言えるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+</section>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button id="modal-favorite" class="favorite-star modal-favorite-star" title="お気に入りに登録/解除">☆</button>
+    <button id="modal-close" class="modal-close">&times;</button>
+    <div class="modal-body">
+      <div class="modal-image">
+        <img id="modal-image" alt="">
+      </div>
+      <div class="modal-info" id="modal-info"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-disclaimer">
+  <p>価格情報は当サイト調べです。実際の価格・在庫状況と差異が生じる場合があります。値動きは「全体」タブでは各ショップの単純平均価格を基準にしています。</p>
+  <p><a href="about.html">運営者情報</a>　<a href="privacy.html">プライバシーポリシー・お問い合わせ</a></p>
+</footer>
+
+<script src="common.js?v=1"></script>
+<script src="trends.js?v=1"></script>
+</body>
+</html>

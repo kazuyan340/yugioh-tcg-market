@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="遊戯王OCGのデッキ(メインデッキ40〜60枚・エクストラデッキ15枚まで・サイドデッキ15枚まで)をカードを選びながら組み立て、現在の相場での合計金額をリアルタイムに確認できるツール。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="遊戯王OCG カード図鑑">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:url" content="https://kazuyan340.github.io/yugioh-tcg-market/deck.html">
+<meta property="og:title" content="デッキ作成 | 遊戯王OCG カード図鑑">
+<meta property="og:description" content="遊戯王OCGのデッキ(メインデッキ40〜60枚・エクストラデッキ15枚まで・サイドデッキ15枚まで)をカードを選びながら組み立て、現在の相場での合計金額をリアルタイムに確認できるツール。">
+<meta property="og:image" content="https://kazuyan340.github.io/yugioh-tcg-market/ogp.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="デッキ作成 | 遊戯王OCG カード図鑑">
+<meta name="twitter:description" content="遊戯王OCGのデッキ(メインデッキ40〜60枚・エクストラデッキ15枚まで・サイドデッキ15枚まで)をカードを選びながら組み立て、現在の相場での合計金額をリアルタイムに確認できるツール。">
+<meta name="twitter:image" content="https://kazuyan340.github.io/yugioh-tcg-market/ogp.png?v=1">
+<title>デッキ作成 | 遊戯王OCG カード図鑑</title>
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<header class="toolbar">
+  <div class="title-row">
+    <div class="title-block">
+      <h1>🃏 デッキ作成</h1>
+      <p id="last-updated" class="last-updated"></p>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-btn">📋 カード図鑑</a>
+      <a href="trends.html" class="nav-btn">📊 価格の動きを見る</a>
+      <a href="movers-up.html" class="nav-btn">🔺 値上がりを見る</a>
+      <a href="movers-down.html" class="nav-btn">🔻 値下がりを見る</a>
+      <a href="ranking.html" class="nav-btn">💰 相場ランキング</a>
+      <a href="compare.html" class="nav-btn">★ お気に入り</a>
+      <a href="deck.html" class="nav-btn current-page">🃏 デッキ作成</a>
+    </div>
+    <button type="button" class="nav-menu-toggle" aria-label="メニュー" aria-expanded="false">☰</button>
+  </div>
+</header>
+
+<div class="deck-layout">
+  <!-- 左側: デッキ全体(メイン・エクストラ・サイド)を常に表示。埋まっている枠は
+       カード画像入りで表示され、クリックで1枚減らせる。 -->
+  <main class="deck-main">
+    <div class="deck-summary">
+      <div id="deck-main-count" class="deck-count">メインデッキ 0枚(規定 40〜60枚)</div>
+      <div id="deck-extra-count" class="deck-count">エクストラデッキ 0/15枚</div>
+      <div id="deck-side-count" class="deck-count">サイドデッキ 0/15枚</div>
+      <div class="deck-total" id="deck-total">合計 0円</div>
+      <button type="button" id="clear-deck" class="reset-btn">デッキをクリア</button>
+      <button type="button" id="share-deck" class="reset-btn">🔗 URLで共有</button>
+    </div>
+    <p id="banlist-mode-note" class="banlist-mode-note"></p>
+
+    <div class="deck-zone-section">
+      <h3>メインデッキ <span class="deck-hint">枠をクリックで1枚減らせます</span></h3>
+      <div id="deck-main-grid" class="deck-main-grid"></div>
+    </div>
+
+    <div class="deck-zone-section">
+      <h3>エクストラデッキ <span class="deck-hint">融合・シンクロ・エクシーズ・リンクモンスター</span></h3>
+      <div id="deck-extra-grid" class="deck-main-grid"></div>
+    </div>
+
+    <div class="deck-zone-section">
+      <h3>サイドデッキ</h3>
+      <div id="deck-side-grid" class="deck-main-grid"></div>
+    </div>
+  </main>
+
+  <!-- 右側: カードの検索・選択パネル。クリックしたカードはそのまま該当ゾーンへ
+       追加される(モンスターの種類で自動判定。サイドタブ選択時のみサイドへ)。 -->
+  <aside class="deck-search-panel">
+    <div class="deck-zone-tabs">
+      <button type="button" class="site-tab deck-zone-tab active" data-zone="all">全部から探す</button>
+      <button type="button" class="site-tab deck-zone-tab" data-zone="main">メイン用</button>
+      <button type="button" class="site-tab deck-zone-tab" data-zone="extra">エクストラ用</button>
+      <button type="button" class="site-tab deck-zone-tab" data-zone="side">サイド用</button>
+    </div>
+    <div class="filter-item">
+      <input type="text" id="keyword" placeholder="カード名で検索">
+    </div>
+    <div class="filters">
+      <details class="filter-group" id="filter-species-group">
+        <summary>種族<span class="count-badge hidden"></span></summary>
+        <div class="checkbox-list" id="filter-species-list"></div>
+      </details>
+      <details class="filter-group" id="filter-attribute-group">
+        <summary>属性<span class="count-badge hidden"></span></summary>
+        <div class="checkbox-list" id="filter-attribute-list"></div>
+      </details>
+      <details class="filter-group" id="filter-rarity-group">
+        <summary>レアリティ<span class="count-badge hidden"></span></summary>
+        <div class="checkbox-list" id="filter-rarity-list"></div>
+      </details>
+      <details class="filter-group" id="filter-pack-group">
+        <summary>収録パック<span class="count-badge hidden"></span></summary>
+        <div class="checkbox-list" id="filter-pack-list"></div>
+      </details>
+    </div>
+    <div class="sort-row">
+      <label for="sort-select">並び替え</label>
+      <select id="sort-select">
+        <option value="id_asc">番号順</option>
+        <option value="id_desc">番号順(降順)</option>
+        <option value="level_desc">レベル/ランク順(高い順)</option>
+        <option value="level_asc">レベル/ランク順(低い順)</option>
+        <option value="atk_desc">ATK順(高い順)</option>
+        <option value="atk_asc">ATK順(低い順)</option>
+        <option value="def_desc">DEF順(高い順)</option>
+        <option value="def_asc">DEF順(低い順)</option>
+      </select>
+    </div>
+    <p id="result-count" class="result-count"></p>
+    <p class="deck-hint">カードをクリックでデッキに追加</p>
+
+    <div id="card-grid" class="card-grid deck-search-grid"></div>
+  </aside>
+</div>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button id="modal-favorite" class="favorite-star modal-favorite-star" title="お気に入りに登録/解除">☆</button>
+    <button id="modal-close" class="modal-close">&times;</button>
+    <div class="modal-body">
+      <div class="modal-image">
+        <img id="modal-image" alt="">
+      </div>
+      <div class="modal-info" id="modal-info"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-disclaimer">
+  <p>価格情報は当サイト調べです。実際の価格・在庫状況と差異が生じる場合があります。掲載しているカード画像は遊戯王OCG公式サイトの情報を参照しています。</p>
+  <p>デッキ構築ルール(メインデッキ40〜60枚・エクストラデッキ15枚まで・サイドデッキ15枚まで・禁止/制限カード)は当サイト独自の目安です。最新の公式ルール・リミットレギュレーションは公式サイトをご確認ください。</p>
+  <p><a href="about.html">運営者情報</a>　<a href="privacy.html">プライバシーポリシー・お問い合わせ</a></p>
+</footer>
+
+<script src="common.js?v=1"></script>
+<script src="deck.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="遊戯王OCGの前回取得より値下がりしたカード一覧。">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="遊戯王OCG カード図鑑">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:url" content="https://kazuyan340.github.io/yugioh-tcg-market/movers-down.html">
+<meta property="og:title" content="値下がりを見る | 遊戯王OCG カード図鑑">
+<meta property="og:description" content="遊戯王OCGの前回取得より値下がりしたカード一覧。">
+<meta property="og:image" content="https://kazuyan340.github.io/yugioh-tcg-market/ogp.png?v=1">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="値下がりを見る | 遊戯王OCG カード図鑑">
+<meta name="twitter:description" content="遊戯王OCGの前回取得より値下がりしたカード一覧。">
+<meta name="twitter:image" content="https://kazuyan340.github.io/yugioh-tcg-market/ogp.png?v=1">
+<title>値下がりを見る | 遊戯王OCG カード図鑑</title>
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<header class="toolbar">
+  <div class="title-row">
+    <div class="title-block">
+      <h1>🔻 値下がりを見る</h1>
+      <p id="last-updated" class="last-updated"></p>
+    </div>
+    <div class="nav-links">
+      <a href="index.html" class="nav-btn">📋 カード図鑑</a>
+      <a href="trends.html" class="nav-btn">📊 価格の動きを見る</a>
+      <a href="movers-up.html" class="nav-btn">🔺 値上がりを見る</a>
+      <a href="movers-down.html" class="nav-btn current-page">🔻 値下がりを見る</a>
+      <a href="ranking.html" class="nav-btn">💰 相場ランキング</a>
+      <a href="compare.html" class="nav-btn">★ お気に入り</a>
+      <a href="deck.html" class="nav-btn">🃏 デッキ作成</a>
+    </div>
+    <button type="button" class="nav-menu-toggle" aria-label="メニュー" aria-expanded="false">☰</button>
+  </div>
+  <div class="site-tabs" id="site-tabs"></div>
+  <p id="result-count" class="result-count"></p>
+</header>
+
+<main id="card-grid" class="card-grid"></main>
+<p id="empty-message" class="empty-message hidden">まだ比較できるデータがありません。毎日の自動更新でデータが溜まると表示されます。</p>
+
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal-card">
+    <button id="modal-favorite" class="favorite-star modal-favorite-star" title="お気に入りに登録/解除">☆</button>
+    <button id="modal-close" class="modal-close">&times;</button>
+    <div class="modal-body">
+      <div class="modal-image">
+        <img id="modal-image" alt="">
+      </div>
+      <div class="modal-info" id="modal-info"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="site-disclaimer">
+  <p>価格情報は当サイト調べです。</p>
+  <p><a href="about.html">運営者情報</a>　<a href="privacy.html">プライバシーポリシー・お問い合わせ</a></p>
+</footer>
+
+<script src="common.js?v=1"></script>
+<script>window.MOVERS_DIRECTION = "down";</script>
+<script src="movers.js?v=1"></script>
+</body>
+</html>
