@@ -1,8 +1,10 @@
 __pycache__/
 *.pyc
 # DB本体やクロール作業時のログ・デバッグ用スクラッチファイルはコミット対象外
-# (onepiece-card-game/conanと同じ運用: data/には何もコミットしない)。
-data/
+# (onepiece-card-game/conanと同じ運用: リポジトリ直下のdata/には何もコミットしない)。
+# 先頭の "/" で固定していないと site/data/ (公開用JSON、コミット必須) まで
+# 誤って除外してしまうので注意 (一度実際にこれで事故った)。
+/data/
 # 各スクレイパーがsync_prices()実行中に書き出す中間データ。
 # build_unresolved_report.pyがこれをまとめてsite/data/unresolved-shop-items.json
 # (公開・コミット対象)を作るので、生データ自体はコミット不要。
