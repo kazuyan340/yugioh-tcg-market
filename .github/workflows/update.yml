@@ -52,7 +52,7 @@ jobs:
           exit 0
         shell: powershell
 
-      - name: Fetch prices from Suruga-ya (respects Crawl-delay: 30)
+      - name: "Fetch prices from Suruga-ya (respects Crawl-delay: 30)"
         run: '& "${{ env.PYTHON }}" scraper_prices_surugaya.py'
 
       - name: Hand off database to the next job
