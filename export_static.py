@@ -6,7 +6,11 @@ GitHub Pages等の静的ホスティングで動かすため、サイト側は�
 生成物にのみ依存し、それらのファイル自体は変更しない。
 
 出力ファイル:
-  site/data/cards.json               … カード一覧全件
+  site/data/cards/manifest.json      … チャンク数・総件数
+  site/data/cards/chunk-N.json       … カード一覧(軽量版。効果テキストを含まない)
+  site/data/cards/text-N.json        … 効果テキストのみ({id: {effect_text, pendulum_text}})
+                                          。chunk-N.jsonと同じカード集合・同じ順序のN。
+                                          初期表示をブロックしないよう遅延取得する。
   site/data/meta.json                … 総件数・絞り込み用の候補値一覧・生成時刻
   site/data/prices_latest.json       … カードごとの直近最安値・全ショップ平均
   site/data/prices/{id}.json         … カード1枚分の価格履歴全件(データがあるカードのみ)
@@ -314,6 +318,60 @@ def export_unofficial_cards(conn) -> list[dict]:
     return build_cards_json(conn)
 
 
+# カード一覧の配信をチャンク分割する件数。38,000件超の全文(特にeffect_text)を
+# 1ファイルにまとめると37MB超になり、モバイル回線・非力な端末では
+# ダウンロード+JSON.parseに時間がかかりすぎてトップページが実質開けなくなる
+# 不具合が発生したため、(1)効果テキストを別ファイルに分離して遅延読込にし、
+# (2)残った軽量な一覧本体もチャンク分割して並列取得できるようにした。
+CARD_CHUNK_SIZE = 1000
+
+# 一覧本体(グリッド表示・絞り込みに必要な項目)には含めず、効果テキスト側の
+# チャンク(data/cards/text-*.json)にのみ含めるフィールド。
+TEXT_ONLY_FIELDS = ("effect_text", "pendulum_text")
+
+
+def write_card_chunks(cards: list[dict], out_dir: Path) -> dict:
+    """cards(build_cards_jsonの全件)を軽量チャンク(data/cards/chunk-N.json)と
+    効果テキストのみのチャンク(data/cards/text-N.json、{id: {effect_text, pendulum_text}})
+    に分割して書き出す。data/cards/manifest.jsonにチャンク数を記録する
+    (common.jsのloadCardData()がこれを読んで並列取得する)。"""
+    cards_dir = out_dir / "cards"
+    cards_dir.mkdir(parents=True, exist_ok=True)
+    # 前回ビルド分のチャンク数が減った場合に古いファイルが残り続けないよう、
+    # 既存のchunk-*/text-*.jsonを一旦削除してから書き直す。
+    for old in cards_dir.glob("chunk-*.json"):
+        old.unlink()
+    for old in cards_dir.glob("text-*.json"):
+        old.unlink()
+
+    chunk_count = 0
+    for start in range(0, len(cards), CARD_CHUNK_SIZE):
+        batch = cards[start:start + CARD_CHUNK_SIZE]
+        light_batch = []
+        text_map = {}
+        for card in batch:
+            light = {k: v for k, v in card.items() if k not in TEXT_ONLY_FIELDS}
+            light_batch.append(light)
+            if card.get("effect_text") or card.get("pendulum_text"):
+                text_map[card["id"]] = {
+                    "effect_text": card.get("effect_text"),
+                    "pendulum_text": card.get("pendulum_text"),
+                }
+        (cards_dir / f"chunk-{chunk_count}.json").write_text(
+            json.dumps(light_batch, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+        )
+        (cards_dir / f"text-{chunk_count}.json").write_text(
+            json.dumps(text_map, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+        )
+        chunk_count += 1
+
+    manifest = {"chunk_count": chunk_count, "chunk_size": CARD_CHUNK_SIZE, "total": len(cards)}
+    (cards_dir / "manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False), encoding="utf-8"
+    )
+    return manifest
+
+
 def export_static() -> None:
     SITE_DATA_DIR.mkdir(parents=True, exist_ok=True)
     conn = db.get_connection()
@@ -331,9 +389,7 @@ def export_static() -> None:
     finally:
         conn.close()
 
-    (SITE_DATA_DIR / "cards.json").write_text(
-        json.dumps(cards, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
-    )
+    manifest = write_card_chunks(cards, SITE_DATA_DIR)
     (SITE_DATA_DIR / "meta.json").write_text(
         json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -350,11 +406,15 @@ def export_static() -> None:
     (SITE_DATA_DIR / "banlist.json").write_text(
         json.dumps(banlist, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
     )
+    unofficial_light = [
+        {k: v for k, v in c.items() if k not in TEXT_ONLY_FIELDS} for c in unofficial_cards
+    ]
     (SITE_DATA_DIR / "unofficial-cards.json").write_text(
-        json.dumps(unofficial_cards, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
+        json.dumps(unofficial_light, ensure_ascii=False, separators=(",", ":")), encoding="utf-8"
     )
     print(
-        f"cards.json: {len(cards)}件 / meta.json / prices_latest.json({len(prices_latest)}件) / "
+        f"cards: {len(cards)}件 -> data/cards/chunk-0..{manifest['chunk_count'] - 1}.json "
+        f"(+text-*.json) / meta.json / prices_latest.json({len(prices_latest)}件) / "
         f"prices/({per_card_count}件) / trends.json / movers.json / "
         f"banlist.json({len(banlist['entries'])}件) / unofficial-cards.json を書き出しました。"
     )

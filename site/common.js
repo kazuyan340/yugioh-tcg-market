@@ -160,9 +160,83 @@ function fetchFresh(url) {
   return fetch(url, { cache: "no-store" });
 }
 
-async function loadCardData() {
-  const res = await fetchFresh("data/cards.json");
-  return res.json();
+// カード一覧はチャンク分割して配信している(export_static.pyのwrite_card_chunks参照。
+// 38,000件超の効果テキスト込み全文を1ファイルにまとめると37MB超になり、モバイル回線・
+// 非力な端末ではダウンロード+JSON.parseに時間がかかりすぎてトップページが実質開けない
+// 不具合が起きていたため)。data/cards/manifest.jsonでチャンク数を把握し、
+// 軽量版チャンク(data/cards/chunk-N.json、効果テキストを含まない)を並列取得する。
+// 効果テキスト(data/cards/text-N.json)は初期表示をブロックしないよう、この関数が
+// 返した後にバックグラウンドで取得して同じカードオブジェクトへ書き足す
+// (呼び出し側はstate.cards等で同じオブジェクト参照を保持しているため、
+// 取得完了後は再フェッチ無しでeffect_text/pendulum_textが自動的に見えるようになる)。
+const cardTextStatus = { done: false, promise: null };
+
+// onProgress(cardsSoFar, isFullyLoaded) が渡されていれば、チャンクが届くたびに
+// (全チャンク分の取得を待たずに)呼び出す。トップページ(app.js)はこれを使って
+// 最初のチャンクだけでグリッドを描画し始め、残りはバックグラウンドで追記する
+// (フルカタログ37MBを全部落とし切るまで何も表示できなかった問題の対策)。
+// onProgressを渡さない呼び出し(ranking.js等)は従来通り、全チャンク到着後の
+// 配列をawaitで受け取るだけでよい。
+// 取得は全チャンクぶんまとめてfetch()を発行してから順番にawaitするため、
+// ネットワーク的には並列に走る(1件ずつ待ってから次を投げるわけではない)。
+async function loadCardData(onProgress) {
+  const manifestRes = await fetchFresh("data/cards/manifest.json");
+  const manifest = await manifestRes.json();
+  const cards = [];
+  // チャンクは1つずつ順番にfetchする(全チャンクを同時にfetch()すると、
+  // 遅い回線環境でブラウザの同時接続数上限(HTTP/1.1で1オリジンあたり6本)を
+  // 超えた分が詰まり、かえって1チャンク目の表示まで遅くなる/不安定になる
+  // ことを実機相当の低速回線シミュレーションで確認したため)。
+  for (let i = 0; i < manifest.chunk_count; i++) {
+    const res = await fetchFresh(`data/cards/chunk-${i}.json`);
+    const batch = await res.json();
+    cards.push(...batch);
+    if (onProgress) onProgress(cards, i === manifest.chunk_count - 1);
+    // 描画の機会をブラウザに明け渡してから次のチャンクを取りに行く。これが無いと、
+    // チャンク取得が速く終わる環境ではonProgressが呼ばれても画面が一度も
+    // 再描画されないまま最終状態まで進んでしまうことがある。
+    // requestAnimationFrameは背景タブ/ヘッドレス実行環境で大幅に間引かれる
+    // (実測でチャンクの度に呼ぶと本来ミリ秒単位のはずが合計数十秒かかった)
+    // ことがあるため、マクロタスクキューに乗るsetTimeoutを使う。
+    if (i < manifest.chunk_count - 1) {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }
+  loadCardTextInBackground(cards, manifest.chunk_count);
+  return cards;
+}
+
+function loadCardTextInBackground(cards, chunkCount) {
+  const byId = new Map(cards.map((c) => [c.id, c]));
+  cardTextStatus.done = false;
+  cardTextStatus.promise = (async () => {
+    for (let i = 0; i < chunkCount; i++) {
+      try {
+        const res = await fetchFresh(`data/cards/text-${i}.json`);
+        if (!res.ok) continue;
+        const textMap = await res.json();
+        for (const id of Object.keys(textMap)) {
+          const card = byId.get(id);
+          if (card) {
+            card.effect_text = textMap[id].effect_text || null;
+            card.pendulum_text = textMap[id].pendulum_text || null;
+          }
+        }
+      } catch {
+        // 1チャンクの取得失敗でも他のチャンク・検索/一覧表示自体は続行する
+        // (効果テキスト検索がその分だけ不完全になるのみ)。
+      }
+    }
+    cardTextStatus.done = true;
+  })();
+  return cardTextStatus.promise;
+}
+
+// 指定カードの効果テキストがまだ届いていなければ、バックグラウンド取得の完了を待つ。
+// (モーダルを開いた時点でまだtext-*.jsonの取得が終わっていない場合のフォールバック)
+async function ensureCardText(card) {
+  if (card.effect_text !== undefined || !cardTextStatus.promise) return;
+  await cardTextStatus.promise;
 }
 
 async function loadPricesLatest() {
@@ -291,7 +365,7 @@ function cardSubLabel(card) {
 function createCardTile(card, pricesLatest, badgeHtml) {
   const priceInfo = pricesLatest[card.id];
   const priceBadge = priceInfo
-    ? `<div class="card-tile-price">¥${priceInfo.best.price.toLocaleString()}〜</div>`
+    ? `<div class="card-tile-price">${priceInfo.pooled_avg.toLocaleString()}円</div>`
     : "";
   const tile = document.createElement("button");
   tile.type = "button";
@@ -455,9 +529,19 @@ function setupChartHover(canvas, hitPoints) {
 }
 
 function drawSimpleChart(canvas, points) {
+  // canvasの描画バッファ解像度をCSS表示サイズ(+devicePixelRatio)に合わせる。
+  // これをしないと、CSS側で#price-chart{width:100%;height:260px}によって拡大
+  // 表示された分だけ線がぼやけて見えてしまう(canvas要素はwidth/height属性=
+  // 描画解像度と、CSSサイズ=表示サイズが別物のため。conan/site/common.jsの
+  // drawPriceChartと同じ対処)。
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth || canvas.width;
+  const h = canvas.clientHeight || canvas.height;
+  canvas.width = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+
   const ctx = canvas.getContext("2d");
-  const w = canvas.width;
-  const h = canvas.height;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, w, h);
   if (points.length < 2) return;
 
@@ -554,12 +638,26 @@ function monsterStatLine(card) {
   return bits.join(" ");
 }
 
+function modalEffectTextHtml(card) {
+  // 効果テキストはバックグラウンドで遅延取得している(loadCardTextInBackground参照)。
+  // card.effect_text === undefined はまだ届いていない状態、null/""は本当に無い
+  // (罠・魔法の一部やテキスト取得失敗など)を表す。
+  if (card.effect_text === undefined && card.pendulum_text === undefined) {
+    return `<div class="info-block" id="modal-effect-text-block"><h3>効果テキスト</h3><p class="price-empty">読み込み中…</p></div>`;
+  }
+  return `<div id="modal-effect-text-block">
+    ${card.effect_text ? `<div class="info-block"><h3>効果テキスト</h3><p>${escapeHtml(card.effect_text)}</p></div>` : ""}
+    ${card.pendulum_text ? `<div class="info-block"><h3>ペンデュラム効果</h3><p>${escapeHtml(card.pendulum_text)}</p></div>` : ""}
+  </div>`;
+}
+
 function openModal(card, pricesLatest) {
   const overlay = document.getElementById("modal-overlay");
   const img = document.getElementById("modal-image");
   const info = document.getElementById("modal-info");
   const favBtn = document.getElementById("modal-favorite");
 
+  overlay.dataset.openCardId = card.id;
   img.src = card.image_url || "";
   img.alt = card.name;
 
@@ -574,11 +672,19 @@ function openModal(card, pricesLatest) {
     ${statRow("属性", card.attribute)}
     ${statRow("ATK", card.atk)}
     ${statRow("DEF", card.def)}
-    ${card.effect_text ? `<div class="info-block"><h3>効果テキスト</h3><p>${escapeHtml(card.effect_text)}</p></div>` : ""}
-    ${card.pendulum_text ? `<div class="info-block"><h3>ペンデュラム効果</h3><p>${escapeHtml(card.pendulum_text)}</p></div>` : ""}
+    ${modalEffectTextHtml(card)}
     ${statRow("収録パック", card.pack)}
     ${priceSection(card, pricesLatest)}
   `;
+
+  if (card.effect_text === undefined) {
+    ensureCardText(card).then(() => {
+      // 取得完了までの間にモーダルを閉じる/別カードを開いた場合は上書きしない。
+      if (overlay.dataset.openCardId !== card.id) return;
+      const block = document.getElementById("modal-effect-text-block");
+      if (block) block.outerHTML = modalEffectTextHtml(card);
+    });
+  }
 
   if (favBtn) {
     favBtn.textContent = isFavorite(card.id) ? "★" : "☆";

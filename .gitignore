@@ -9,3 +9,6 @@ __pycache__/
 # build_unresolved_report.pyがこれをまとめてsite/data/unresolved-shop-items.json
 # (公開・コミット対象)を作るので、生データ自体はコミット不要。
 site/data/unresolved_raw/
+# ローカル動作確認用に python -m http.server をsite/内で起動した際のログ
+# (誤って初回コミットに混入していたので明示的に除外する)。
+site/server.log
