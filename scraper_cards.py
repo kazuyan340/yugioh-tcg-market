@@ -201,8 +201,14 @@ def parse_results_page(html: str) -> list[dict]:
     image_map: dict[str, str] = {}
     for cid, ciid, enc in IMG_RE.findall(html):
         if ciid == "1" and cid not in image_map:
+            # 検索結果一覧ページのサムネイルURLには &request_locale=ja が付いていない
+            # (詳細ページ側のURLには付いている)。これが無いと get_image.action は
+            # 北米TCG版(英語)の画像を返すことを実測で確認済み(同じcid/enc組み合わせで
+            # request_locale=ja を付けた場合とファイルサイズが明確に異なり、付けた方が
+            # 正しい日本語版と一致した)。そのため明示的に付与する。
             image_map[cid] = (
-                f"{BASE}/get_image.action?type=1&osplang=1&cid={cid}&ciid={ciid}&enc={enc}"
+                f"{BASE}/get_image.action?type=1&osplang=1&cid={cid}&ciid={ciid}"
+                f"&enc={enc}&request_locale=ja"
             )
 
     cards = []
